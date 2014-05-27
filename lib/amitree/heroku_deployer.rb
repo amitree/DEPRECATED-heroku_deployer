@@ -67,17 +67,25 @@ module Amitree
         puts "- Trying staging release #{staging_release['name']} with commit #{staging_commit}" if options[:verbose]
         puts "  - Stories: #{story_ids.inspect}" if options[:verbose]
 
-        unaccepted_story_ids = story_ids.select { |story| get_tracker_status(story) != 'accepted' }
-        stories.each do |story|
-          story.blocked_by = unaccepted_story_ids
-        end
+        unaccepted_story_ids = story_ids.select { |story_id| get_tracker_status(story_id) != 'accepted' }
 
         if unaccepted_story_ids.length > 0
+          stories.each do |story|
+            story.blocked_by = unaccepted_story_ids
+          end
           puts "    - Some stories are not yet accepted: #{unaccepted_story_ids.inspect}" if options[:verbose]
         else
-          puts "    - This release is good to go!" if options[:verbose]
-          result.staging_release_to_deploy = staging_release
-          break
+          story_ids_referenced_later = story_ids & @git.stories_worked_on_between(staging_commit, 'HEAD')
+          if story_ids_referenced_later.length > 0
+            puts "    - Some stories have been worked on in a later commit: #{story_ids_referenced_later}" if options[:verbose]
+          else
+            stories.each do |story|
+              story.blocked_by = unaccepted_story_ids
+            end
+            puts "    - This release is good to go!" if options[:verbose]
+            result.staging_release_to_deploy = staging_release
+            break
+          end
         end
       end
 

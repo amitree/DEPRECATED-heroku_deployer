@@ -18,7 +18,7 @@ module Amitree
 
     def stories_worked_on_between(rev1, rev2)
       messages = commit_messages_between(rev1, rev2)
-      messages.map{|msg| msg.scan /(?<=#)\d+/}.flatten.uniq
+      messages.map{|msg| msg.scan /(?<=#)\d+/}.flatten.map(&:to_i).uniq
     end
 
     def link_to(rev)

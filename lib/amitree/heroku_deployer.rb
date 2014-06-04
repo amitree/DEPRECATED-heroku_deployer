@@ -55,14 +55,13 @@ module Amitree
       prod_commit = result.production_release['commit']
       puts "Production release is #{prod_commit}" if options[:verbose]
 
-      @git.stories_worked_on_between(prod_commit, 'HEAD').each do |story_id|
-        result.stories << ReleaseDetails::Story.new(tracker_data(story_id))
-      end
+      result.stories = stories_worked_on_between(prod_commit, 'HEAD')
+      all_stories = Hash[result.stories.map{|story| [story.id, story]}]
 
       staging_releases.reverse.each do |staging_release|
         staging_commit = staging_release['commit']
-        story_ids = @git.stories_worked_on_between(prod_commit, staging_commit).map(&:to_i)
-        stories = result.stories.select{|story| story_ids.include?(story.id)}
+        stories = all_stories.values_at(*@git.stories_worked_on_between(prod_commit, staging_commit)).compact
+        story_ids = stories.map(&:id)
 
         puts "- Trying staging release #{staging_release['name']} with commit #{staging_commit}" if options[:verbose]
         puts "  - Stories: #{story_ids.inspect}" if options[:verbose]
@@ -98,6 +97,14 @@ module Amitree
 
     def tracker_data(story_id)
       @tracker_cache[story_id] ||= @tracker_project.stories.find(story_id)
+    end
+
+    def stories_worked_on_between(rev1, rev2)
+      @git.stories_worked_on_between(rev1, rev2).map do |story_id|
+        if story = tracker_data(story_id)
+          ReleaseDetails::Story.new(story)
+        end
+      end.compact
     end
   end
 end

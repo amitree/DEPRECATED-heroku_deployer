@@ -58,6 +58,35 @@ describe Amitree::HerokuDeployer do
         expect(result.stories[1].blocked_by).to eq [4567]
       end
     end
+
+    context 'missing story' do
+      let!(:stories) {[
+        mock_story(5678, 'accepted')
+      ]}
+
+      let!(:releases) {[
+        mock_release('Current production release'),
+        mock_release('[#1234] release 0', 1234),
+        mock_release('[#5678] release 1', 5678),
+      ]}
+
+      let(:production_release) { releases[0] }
+      let(:staging_releases) { releases[1..-1] }
+
+      let(:result) { deployer.compute_release }
+
+      before do
+        allow(deployer).to receive(:tracker_data).with(1234).and_return(nil)
+      end
+
+      it "should not include non-existent stories" do
+        expect(result.stories.map(&:id)).to eq [5678]
+      end
+
+      it "should not allow non-existent stories to block release" do
+        expect(result.stories[0].blocked_by).to eq []
+      end
+    end
   end
 end
 

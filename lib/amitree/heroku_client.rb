@@ -7,6 +7,9 @@ module Amitree
     class Error < StandardError
     end
 
+    class PostDeploymentError < Error
+    end
+
     def initialize(api_key, staging_app_name, production_app_name)
       @heroku = Heroku::API.new(:api_key => api_key)
       # We need to use the new API (not currently supported by the heroku-api gem) for deploy_to_production
@@ -61,8 +64,17 @@ module Amitree
       result.body['slug']['id'] || raise(Error.new("Could not find slug in API response: #{result.inspect}"))
     end
 
-    def db_migrate_on_production
-      heroku_run(@production_app_name, 'rake db:migrate db:seed')
+    def db_migrate_on_production(attempts=0)
+      begin
+        heroku_run @production_app_name, 'rake db:migrate db:seed'
+      rescue => e
+        if attempts < 2
+          db_migrate_on_production(attempts+1)
+          raise PostDeploymentError if attempts == 0
+        else
+          raise e
+        end
+      end
     end
 
   private

@@ -4,7 +4,7 @@ module Amitree
   class GitClient
     def initialize(repository, username, password)
       @repository = repository
-      @client = Octokit::Client.new login: username, password: password
+      @client = Octokit::Client.new login: username, password: password, connection_options: Octokit::Default.options[:connection_options].merge(timeout: 60, open_timeout: 60)
     end
 
     def commits_between(rev1, rev2)

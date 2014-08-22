@@ -44,7 +44,8 @@ describe Amitree::HerokuClient do
   describe '#db_migrate_on_production' do
     before do
       @attempts = 0
-      allow(@client).to receive(:heroku_run) do
+      allow(@client).to receive(:heroku_run) do |app, cmd|
+        @cmd = cmd
         @attempts += 1
         raise StandardError if @attempts <= num_failures
       end
@@ -52,9 +53,27 @@ describe Amitree::HerokuClient do
 
     context 'with no failures' do
       let(:num_failures) { 0 }
+      let(:options) { {} }
+      before do
+        @client.db_migrate_on_production(options)
+      end
       it 'should succeed' do
-        @client.db_migrate_on_production
         expect(@attempts).to eq 1
+      end
+      it 'should run the default rake task' do
+        expect(@cmd).to eq 'rake db:migrate db:seed'
+      end
+      context 'with a single additional rake task' do
+        let(:options) { {rake: 'do:something:else'} }
+        it 'should run a single additional rake task if requested' do
+          expect(@cmd).to eq 'rake db:migrate db:seed do:something:else'
+        end
+      end
+      context 'with several additional rake tasks' do
+        let(:options) { {rake: ['do:something', 'else']} }
+        it 'should run additional rake tasks if requested' do
+          expect(@cmd).to eq 'rake db:migrate db:seed do:something else'
+        end
       end
     end
 

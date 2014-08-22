@@ -52,7 +52,7 @@ module Amitree
       puts "Deploying slug to production: #{slug}"
       unless options[:dry_run]
         @heroku_new.post_release(@production_app_name, {'slug' => slug, 'description' => "Promote #{@staging_app_name} #{staging_release_name}"})
-        db_migrate_on_production
+        db_migrate_on_production(options)
       end
     end
 
@@ -64,12 +64,13 @@ module Amitree
       result.body['slug']['id'] || raise(Error.new("Could not find slug in API response: #{result.inspect}"))
     end
 
-    def db_migrate_on_production(attempts=0)
+    def db_migrate_on_production(options={}, attempts=0)
       begin
-        heroku_run @production_app_name, 'rake db:migrate db:seed'
+        tasks = %w(db:migrate db:seed) + Array(options[:rake])
+        heroku_run @production_app_name, "rake #{tasks.join(' ')}"
       rescue => e
         if attempts < 2
-          db_migrate_on_production(attempts+1)
+          db_migrate_on_production(options, attempts+1)
           raise PostDeploymentError if attempts == 0
         else
           raise e

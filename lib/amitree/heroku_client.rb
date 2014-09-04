@@ -66,7 +66,7 @@ module Amitree
       unless staging_release_version.is_a?(Fixnum)
         raise Error.new "Unexpected release version: #{staging_release_version}"
       end
-      result = @heroku.release.info(@staging_app_name, $1)
+      result = @heroku.release.info(@staging_app_name, staging_release_version)
       result['slug']['id'] || raise(Error.new("Could not find slug in API response: #{result.inspect}"))
     end
 

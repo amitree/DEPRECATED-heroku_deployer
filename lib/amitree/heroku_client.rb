@@ -95,7 +95,7 @@ module Amitree
       puts "Running command on #{app_name}: #{command}..."
       data = @heroku.dyno.create(app_name, { command: command, attach: true })
       read, write = IO.pipe
-      Rendezvous.start(url: data['rendezvous_url'], input: read)
+      Rendezvous.start(url: data['attach_url'], input: read)
       read.close
       write.close
       puts "Done."

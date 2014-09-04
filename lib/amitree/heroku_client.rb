@@ -34,14 +34,14 @@ module Amitree
     end
 
     def staging_release_name(production_release)
-      unless production_release['descr'] =~ @promoted_release_regexp
-        raise Error.new "Production release was not promoted from staging: #{production_release['descr']}"
+      unless production_release['description'] =~ @promoted_release_regexp
+        raise Error.new "Production release was not promoted from staging: #{production_release['description']}"
       end
       $1
     end
 
     def promoted_from_staging?(release)
-      release['descr'] =~ @promoted_release_regexp
+      release['description'] =~ @promoted_release_regexp
     end
 
     def staging_releases_since(staging_release_name)

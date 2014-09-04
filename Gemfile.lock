@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    heroku_deployer (0.7.2)
+    heroku_deployer (0.7.3)
       octokit (= 2.7.1)
       platform-api (= 0.2.0)
       rendezvous (= 0.0.2)

@@ -53,7 +53,7 @@ module Amitree
       staging_releases = @heroku.staging_releases_since(@heroku.staging_release_version(result.production_release))
 
       prod_commit = @heroku.get_production_commit(result.production_release)
-      puts "Production release is #{prod_commit_full}" if options[:verbose]
+      puts "Production release is #{prod_commit}" if options[:verbose]
 
       result.stories = stories_worked_on_between(prod_commit, 'HEAD')
       all_stories = Hash[result.stories.map{|story| [story.id, story]}]

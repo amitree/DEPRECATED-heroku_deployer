@@ -52,14 +52,14 @@ module Amitree
       result.production_promoted_from_staging = @heroku.promoted_from_staging?(result.production_release)
       staging_releases = @heroku.staging_releases_since(@heroku.staging_release_name(result.production_release))
 
-      prod_commit = result.production_release['commit']
-      puts "Production release is #{prod_commit}" if options[:verbose]
+      prod_commit = @heroku.get_production_commit(result.production_release)
+      puts "Production release is #{prod_commit_full}" if options[:verbose]
 
       result.stories = stories_worked_on_between(prod_commit, 'HEAD')
       all_stories = Hash[result.stories.map{|story| [story.id, story]}]
 
       staging_releases.reverse.each do |staging_release|
-        staging_commit = staging_release['commit']
+        staging_commit = @heroku.get_staging_commit(staging_release)
         stories = all_stories.values_at(*@git.stories_worked_on_between(prod_commit, staging_commit)).compact
         story_ids = stories.map(&:id)
 

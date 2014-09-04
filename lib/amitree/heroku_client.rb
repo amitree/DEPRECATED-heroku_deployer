@@ -1,5 +1,4 @@
-require 'heroku-api'
-require 'heroku/new_api'
+require 'platform-api'
 require 'rendezvous'
 
 module Amitree
@@ -11,12 +10,19 @@ module Amitree
     end
 
     def initialize(api_key, staging_app_name, production_app_name)
-      @heroku = Heroku::API.new(:api_key => api_key)
-      # We need to use the new API (not currently supported by the heroku-api gem) for deploy_to_production
-      @heroku_new = Heroku::NewAPI.new(:api_key => api_key)
+      @heroku = PlatformAPI.connect(api_key)
+      @heroku_no_cache = PlatformAPI.connect(api_key, cache: Moneta.new(:Null))
       @staging_app_name = staging_app_name
       @production_app_name = production_app_name
       @promoted_release_regexp = /Promote #{@staging_app_name} (v\d+)/
+    end
+
+    def get_staging_commit(release)
+      @heroku.slug.info(@staging_app_name, release['slug']['id'])['commit']
+    end
+
+    def get_production_commit(release)
+      @heroku.slug.info(@production_app_name, release['slug']['id'])['commit']
     end
 
     def current_production_release
@@ -51,7 +57,7 @@ module Amitree
       slug = staging_slug(staging_release_name)
       puts "Deploying slug to production: #{slug}"
       unless options[:dry_run]
-        @heroku_new.post_release(@production_app_name, {'slug' => slug, 'description' => "Promote #{@staging_app_name} #{staging_release_name}"})
+        @heroku.release.create(@production_app_name, {'slug' => slug, 'description' => "Promote #{@staging_app_name} #{staging_release_name}"})
         db_migrate_on_production(options)
       end
     end
@@ -60,8 +66,8 @@ module Amitree
       unless staging_release_name =~ /\Av(\d+)\z/
         raise Error.new "Unexpected release name: #{staging_release_name}"
       end
-      result = @heroku_new.get_release(@staging_app_name, $1)
-      result.body['slug']['id'] || raise(Error.new("Could not find slug in API response: #{result.inspect}"))
+      result = @heroku.release.info(@staging_app_name, $1)
+      result['slug']['id'] || raise(Error.new("Could not find slug in API response: #{result.inspect}"))
     end
 
     def db_migrate_on_production(options={}, attempts=0)
@@ -80,12 +86,14 @@ module Amitree
 
   private
     def get_releases(app_name)
-      @heroku.get_releases(app_name).body
+      # Use our own cache because of https://github.com/heroku/platform-api/issues/16
+      @release_cache ||= {}
+      @release_cache[app_name] ||= @heroku_no_cache.release.list(app_name).to_a
     end
 
     def heroku_run(app_name, command)
       puts "Running command on #{app_name}: #{command}..."
-      data = @heroku.post_ps(app_name, command, { attach: true }).body
+      data = @heroku.dyno.create(app_name, { command: command, attach: true })
       read, write = IO.pipe
       Rendezvous.start(url: data['rendezvous_url'], input: read)
       read.close

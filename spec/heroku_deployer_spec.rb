@@ -27,6 +27,8 @@ describe Amitree::HerokuDeployer do
     stories.each do |story|
       allow(deployer).to receive(:tracker_data).with(story.id).and_return(story)
     end
+    allow(heroku).to receive(:get_production_commit) { |release| release['commit'] }
+    allow(heroku).to receive(:get_staging_commit) { |release| release['commit'] }
   end
 
   describe '#compute_release' do

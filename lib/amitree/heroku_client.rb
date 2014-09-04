@@ -14,7 +14,7 @@ module Amitree
       @heroku_no_cache = PlatformAPI.connect(api_key, cache: Moneta.new(:Null))
       @staging_app_name = staging_app_name
       @production_app_name = production_app_name
-      @promoted_release_regexp = /Promote #{@staging_app_name} (v\d+)/
+      @promoted_release_regexp = /Promote #{@staging_app_name} v(\d+)/
     end
 
     def get_staging_commit(release)
@@ -33,38 +33,38 @@ module Amitree
       get_releases(@production_app_name).reverse.detect{|release| promoted_from_staging?(release)} or raise Error.new "Can't find a production release that was promoted from staging!"
     end
 
-    def staging_release_name(production_release)
+    def staging_release_version(production_release)
       unless production_release['description'] =~ @promoted_release_regexp
         raise Error.new "Production release was not promoted from staging: #{production_release['description']}"
       end
-      $1
+      $1.to_i
     end
 
     def promoted_from_staging?(release)
       release['description'] =~ @promoted_release_regexp
     end
 
-    def staging_releases_since(staging_release_name)
+    def staging_releases_since(staging_release_version)
       staging_releases = get_releases(@staging_app_name)
-      index = staging_releases.index { |release| release['name'] == staging_release_name }
+      index = staging_releases.index { |release| release['version'] == staging_release_version }
       if index.nil?
-        raise Error.new "Could not find staging release #{staging_release_name}"
+        raise Error.new "Could not find staging release #{staging_release_version}"
       end
       staging_releases.slice(index+1, staging_releases.length)
     end
 
-    def deploy_to_production(staging_release_name, options={})
-      slug = staging_slug(staging_release_name)
+    def deploy_to_production(staging_release_version, options={})
+      slug = staging_slug(staging_release_version)
       puts "Deploying slug to production: #{slug}"
       unless options[:dry_run]
-        @heroku.release.create(@production_app_name, {'slug' => slug, 'description' => "Promote #{@staging_app_name} #{staging_release_name}"})
+        @heroku.release.create(@production_app_name, {'slug' => slug, 'description' => "Promote #{@staging_app_name} v#{staging_release_version}"})
         db_migrate_on_production(options)
       end
     end
 
-    def staging_slug(staging_release_name)
-      unless staging_release_name =~ /\Av(\d+)\z/
-        raise Error.new "Unexpected release name: #{staging_release_name}"
+    def staging_slug(staging_release_version)
+      unless staging_release_version.is_a?(Fixnum)
+        raise Error.new "Unexpected release version: #{staging_release_version}"
       end
       result = @heroku.release.info(@staging_app_name, $1)
       result['slug']['id'] || raise(Error.new("Could not find slug in API response: #{result.inspect}"))

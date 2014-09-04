@@ -11,7 +11,7 @@ require 'ostruct'
 # Stories #5678 and #1234 have been tested and accepted.  Story #4567 has not.
 
 describe Amitree::HerokuDeployer do
-  let(:heroku) { double(last_promoted_production_release: production_release, :promoted_from_staging? => true, staging_release_name: nil, staging_releases_since: staging_releases) }
+  let(:heroku) { double(last_promoted_production_release: production_release, :promoted_from_staging? => true, staging_release_version: nil, staging_releases_since: staging_releases) }
   let(:git) { double() }
   let(:tracker_project) { double() }
   let(:deployer) { Amitree::HerokuDeployer.new(heroku: heroku, git: git) }

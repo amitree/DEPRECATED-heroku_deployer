@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'heroku_deployer'
-  s.version     = '0.7.5'
+  s.version     = '0.7.6'
   s.date        = Date.today.to_s
   s.summary     = "Heroku Deployer"
   s.description = "Gem that handles automatic deployment of code to Heroku, integrating with Pivotal Tracker and Git"
@@ -16,8 +16,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'octokit', '2.7.1'
   s.add_runtime_dependency 'platform-api', '0.2.0'
   s.add_runtime_dependency 'rendezvous', '0.0.2'
-
-  # Update if pivotal-tracker pull request is accepted
-  s.add_development_dependency 'pivotal-tracker', '0.5.12'
-  # s.add_runtime_dependency 'pivotal-tracker', '0.5.12'
+  s.add_runtime_dependency 'pivotal-tracker', '0.5.13'
 end

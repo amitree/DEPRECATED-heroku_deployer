@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'heroku_deployer'
-  s.version     = '0.7.6'
+  s.version     = '0.7.7'
   s.date        = Date.today.to_s
   s.summary     = "Heroku Deployer"
   s.description = "Gem that handles automatic deployment of code to Heroku, integrating with Pivotal Tracker and Git"

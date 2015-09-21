@@ -4,6 +4,8 @@ require 'pivotal-tracker'
 
 module Amitree
   class HerokuDeployer
+    attr_reader :tracker_project
+
     class ReleaseDetails
       attr_accessor :production_release, :staging_release_to_deploy, :stories
       attr_writer :production_promoted_from_staging

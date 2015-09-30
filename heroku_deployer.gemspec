@@ -16,5 +16,8 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'octokit', '>= 2.7.1'
   s.add_runtime_dependency 'platform-api', '>= 0.2.0'
   s.add_runtime_dependency 'rendezvous', '>= 0.0.2'
-  s.add_runtime_dependency 'pivotal-tracker', '>= 0.5.13'
+
+  # Remove first line and uncomment second line when https://github.com/jsmestad/pivotal-tracker/pull/113 is merged
+  s.add_development_dependency 'pivotal-tracker', '>= 0.5.13'
+  # s.add_runtime_dependency 'pivotal-tracker', '>= 0.5.13'
 end

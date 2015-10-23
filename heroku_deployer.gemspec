@@ -1,12 +1,12 @@
 Gem::Specification.new do |s|
   s.name        = 'heroku_deployer'
-  s.version     = '0.7.9'
+  s.version     = '0.7.10'
   s.date        = Date.today.to_s
   s.summary     = "Heroku Deployer"
   s.description = "Gem that handles automatic deployment of code to Heroku, integrating with Pivotal Tracker and Git"
   s.authors     = ["Nick Wargnier", "Tony Novak"]
   s.email       = 'engineering@amitree.com'
-  s.files       = ["lib/amitree/git_client.rb", "lib/amitree/heroku_client.rb", "lib/amitree/heroku_deployer.rb"]
+  s.files       = Dir.glob('lib/**/*.rb')
 
   s.homepage    = 'http://rubygems.org/gems/heroku_deployer'
   s.license     = 'MIT'

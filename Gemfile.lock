@@ -1,9 +1,8 @@
 PATH
   remote: .
   specs:
-    heroku_deployer (0.7.8)
+    heroku_deployer (0.7.9)
       octokit (>= 2.7.1)
-      pivotal-tracker (>= 0.5.13)
       platform-api (>= 0.2.0)
       rendezvous (>= 0.0.2)
 
@@ -80,6 +79,7 @@ PLATFORMS
 
 DEPENDENCIES
   heroku_deployer!
+  pivotal-tracker (>= 0.5.13)
   rspec (>= 2.14.1)
 
 BUNDLED WITH

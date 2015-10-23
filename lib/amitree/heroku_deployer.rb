@@ -1,11 +1,10 @@
 require 'amitree/git_client'
 require 'amitree/heroku_client'
+require 'amitree/utils'
 require 'pivotal-tracker'
 
 module Amitree
   class HerokuDeployer
-    attr_reader :tracker_project
-
     class ReleaseDetails
       attr_accessor :production_release, :staging_release_to_deploy, :stories
       attr_writer :production_promoted_from_staging
@@ -43,7 +42,7 @@ module Amitree
       @heroku = options[:heroku] || Amitree::HerokuClient.new(options[:heroku_api_key], options[:heroku_staging_app], options[:heroku_production_app])
       @git = options[:git] || Amitree::GitClient.new(options[:github_repo], options[:github_username], options[:github_password])
       PivotalTracker::Client.token = options[:tracker_token]
-      @tracker_project = PivotalTracker::Project.find(options[:tracker_project_id])
+      @tracker_projects = PivotalTracker::Project.all
       @tracker_cache = {}
     end
 
@@ -98,7 +97,9 @@ module Amitree
     end
 
     def tracker_data(story_id)
-      @tracker_cache[story_id] ||= @tracker_project.stories.find(story_id)
+      @tracker_cache[story_id] ||= @tracker_projects.map_detect do |project|
+        project.stories.find(story_id)
+      end
     end
 
     def stories_worked_on_between(rev1, rev2)
@@ -107,6 +108,10 @@ module Amitree
           ReleaseDetails::Story.new(story)
         end
       end.compact
+    end
+
+    def tracker_project(project_id)
+      @tracker_projects.detect{|project| project.id == project_id.to_i} or raise "Unknown project id: #{project_id}"
     end
   end
 end

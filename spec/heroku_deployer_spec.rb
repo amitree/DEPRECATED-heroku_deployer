@@ -17,7 +17,7 @@ describe Amitree::HerokuDeployer do
   let(:deployer) { Amitree::HerokuDeployer.new(heroku: heroku, git: git) }
 
   before do
-    allow(PivotalTracker::Project).to receive(:find).and_return(tracker_project)
+    allow(PivotalTracker::Project).to receive(:all).and_return([tracker_project])
     staging_releases.each_with_index do |staging_release, index|
       allow(git).to receive(:stories_worked_on_between).with(production_release['commit'], staging_release['commit']).and_return staging_releases[0..index].map{|release| release['story_id']}.uniq
     end

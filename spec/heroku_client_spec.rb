@@ -7,7 +7,7 @@ describe Amitree::HerokuClient do
 
   describe '#staging_release_version' do
     it "should return the name of the staging release if production was promoted from staging" do
-      @client.staging_release_version({'description' => 'Promote my-staging-app v123 deadbeef'}).should eq 123
+      expect(@client.staging_release_version({'description' => 'Promote my-staging-app v123 deadbeef'})).to eq 123
     end
 
     it "should raise an error if production was not promoted from staging" do
@@ -23,17 +23,17 @@ describe Amitree::HerokuClient do
     end
 
     it "should return all releases since the specified release" do
-      @client.staging_releases_since(101).should match_array [{'version' => 102}, {'version' => 103}]
+      expect(@client.staging_releases_since('description' => 'Promote my-staging-app v101 deadbeef')).to match_array [{'version' => 102}, {'version' => 103}]
     end
 
     it "should raise an error if the specified release cannot be found" do
       expect {
-        @client.staging_releases_since(104)
+        @client.staging_releases_since('description' => 'Promote my-staging-app v104 deadbeef')
         }.to raise_error(Amitree::HerokuClient::Error)
     end
 
     it "should return an empty array if the specified release is the last one" do
-      @client.staging_releases_since(103).should match_array []
+      expect(@client.staging_releases_since('description' => 'Promote my-staging-app v103 deadbeef')).to eq []
     end
   end
 
@@ -103,6 +103,12 @@ describe Amitree::HerokuClient do
         expect { @client.db_migrate_on_production }.to raise_error StandardError
         expect(@attempts).to eq 3
       end
+    end
+  end
+
+  describe '#version' do
+    it 'should return the version string' do
+      expect(@client.version('version' => 123)).to eq 'v123'
     end
   end
 end

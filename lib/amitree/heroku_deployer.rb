@@ -7,14 +7,9 @@ module Amitree
   class HerokuDeployer
     class ReleaseDetails
       attr_accessor :production_release, :staging_release_to_deploy, :stories
-      attr_writer :production_promoted_from_staging
 
       def initialize
         @stories = []
-      end
-
-      def production_promoted_from_staging?
-        @production_promoted_from_staging
       end
 
       class Story < DelegateClass(PivotalTracker::Story)
@@ -50,8 +45,7 @@ module Amitree
       result = ReleaseDetails.new
 
       result.production_release = @heroku.last_promoted_production_release
-      result.production_promoted_from_staging = @heroku.promoted_from_staging?(result.production_release)
-      staging_releases = @heroku.staging_releases_since(@heroku.staging_release_version(result.production_release))
+      staging_releases = @heroku.staging_releases_since(result.production_release)
 
       prod_commit = @heroku.get_production_commit(result.production_release)
       puts "Production release is #{prod_commit}" if options[:verbose]
@@ -64,7 +58,7 @@ module Amitree
         stories = all_stories.values_at(*@git.stories_worked_on_between(prod_commit, staging_commit)).compact
         story_ids = stories.map(&:id)
 
-        puts "- Trying staging release v#{staging_release['version']} with commit #{staging_commit}" if options[:verbose]
+        puts "- Trying staging release #{@heroku.version(staging_release)} with commit #{staging_commit}" if options[:verbose]
         puts "  - Stories: #{story_ids.inspect}" if options[:verbose]
 
         unaccepted_story_ids = story_ids.select { |story_id| get_tracker_status(story_id) != 'accepted' }

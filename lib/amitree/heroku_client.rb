@@ -44,7 +44,8 @@ module Amitree
       release['description'] =~ @promoted_release_regexp
     end
 
-    def staging_releases_since(staging_release_version)
+    def staging_releases_since(production_release)
+      staging_release_version = self.staging_release_version(production_release)
       staging_releases = get_releases(@staging_app_name)
       index = staging_releases.index { |release| release['version'] == staging_release_version }
       if index.nil?
@@ -53,7 +54,8 @@ module Amitree
       staging_releases.slice(index+1, staging_releases.length)
     end
 
-    def deploy_to_production(staging_release_version, options={})
+    def deploy_to_production(staging_release, options={})
+      staging_release_version = staging_release['version']
       slug = staging_slug(staging_release_version)
       puts "Deploying slug to production: #{slug}"
       unless options[:dry_run]
@@ -82,6 +84,10 @@ module Amitree
           raise e
         end
       end
+    end
+
+    def version(release)
+      "v#{release['version']}"
     end
 
   private

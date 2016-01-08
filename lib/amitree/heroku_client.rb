@@ -25,7 +25,7 @@ module Amitree
     end
 
     def current_production_release
-      get_releases(@production_app_name).last
+      get_releases(@production_app_name).to_a.last
     end
 
     def last_promoted_production_release

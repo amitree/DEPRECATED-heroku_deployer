@@ -11,7 +11,6 @@ module Amitree
 
     def initialize(api_key, staging_app_name, production_app_name)
       @heroku = PlatformAPI.connect(api_key)
-      @heroku_no_cache = PlatformAPI.connect(api_key, cache: Moneta.new(:Null))
       @staging_app_name = staging_app_name
       @production_app_name = production_app_name
       @promoted_release_regexp = /Promote #{@staging_app_name} v(\d+)/
@@ -26,11 +25,11 @@ module Amitree
     end
 
     def current_production_release
-      get_releases(@production_app_name)[-1]
+      get_releases(@production_app_name).last
     end
 
     def last_promoted_production_release
-      get_releases(@production_app_name).reverse.detect{|release| promoted_from_staging?(release)} or raise Error.new "Can't find a production release that was promoted from staging!"
+      get_releases(@production_app_name).to_a.reverse.detect{|release| promoted_from_staging?(release)} or raise Error.new "Can't find a production release that was promoted from staging!"
     end
 
     def staging_release_version(production_release)
@@ -46,7 +45,7 @@ module Amitree
 
     def staging_releases_since(production_release)
       staging_release_version = self.staging_release_version(production_release)
-      staging_releases = get_releases(@staging_app_name)
+      staging_releases = get_releases(@staging_app_name).to_a
       index = staging_releases.index { |release| release['version'] == staging_release_version }
       if index.nil?
         raise Error.new "Could not find staging release #{staging_release_version}"
@@ -92,9 +91,7 @@ module Amitree
 
   private
     def get_releases(app_name)
-      # Use our own cache because of https://github.com/heroku/platform-api/issues/16
-      @release_cache ||= {}
-      @release_cache[app_name] ||= @heroku_no_cache.release.list(app_name).to_a
+      @heroku.release.list(app_name)
     end
 
     def heroku_run(app_name, command)

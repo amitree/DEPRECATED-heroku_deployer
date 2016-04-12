@@ -54,32 +54,39 @@ module Amitree
       all_stories = Hash[result.stories.map{|story| [story.id, story]}]
 
       staging_releases.reverse.each do |staging_release|
-        staging_commit = @heroku.get_staging_commit(staging_release)
-        stories = all_stories.values_at(*@git.stories_worked_on_between(prod_commit, staging_commit)).compact
-        story_ids = stories.map(&:id)
+        begin
+          staging_commit = @heroku.get_staging_commit(staging_release)
 
-        puts "- Trying staging release #{@heroku.version(staging_release)} with commit #{staging_commit}" if options[:verbose]
-        puts "  - Stories: #{story_ids.inspect}" if options[:verbose]
+          puts "- Trying staging release #{@heroku.version(staging_release)} with commit #{staging_commit}" if options[:verbose]
 
-        unaccepted_story_ids = story_ids.select { |story_id| get_tracker_status(story_id) != 'accepted' }
+          stories = all_stories.values_at(*@git.stories_worked_on_between(prod_commit, staging_commit)).compact
+          story_ids = stories.map(&:id)
 
-        if unaccepted_story_ids.length > 0
-          stories.each do |story|
-            story.blocked_by = unaccepted_story_ids
-          end
-          puts "    - Some stories are not yet accepted: #{unaccepted_story_ids.inspect}" if options[:verbose]
-        else
-          story_ids_referenced_later = story_ids & @git.stories_worked_on_between(staging_commit, 'HEAD')
-          if story_ids_referenced_later.length > 0
-            puts "    - Some stories have been worked on in a later commit: #{story_ids_referenced_later}" if options[:verbose]
-          else
+          puts "  - Stories: #{story_ids.inspect}" if options[:verbose]
+
+          unaccepted_story_ids = story_ids.select { |story_id| get_tracker_status(story_id) != 'accepted' }
+
+          if unaccepted_story_ids.length > 0
             stories.each do |story|
               story.blocked_by = unaccepted_story_ids
             end
-            puts "    - This release is good to go!" if options[:verbose]
-            result.staging_release_to_deploy = staging_release
-            break
+            puts "    - Some stories are not yet accepted: #{unaccepted_story_ids.inspect}" if options[:verbose]
+          else
+            story_ids_referenced_later = story_ids & @git.stories_worked_on_between(staging_commit, 'HEAD')
+            if story_ids_referenced_later.length > 0
+              puts "    - Some stories have been worked on in a later commit: #{story_ids_referenced_later}" if options[:verbose]
+            else
+              stories.each do |story|
+                story.blocked_by = unaccepted_story_ids
+              end
+              puts "    - This release is good to go!" if options[:verbose]
+              result.staging_release_to_deploy = staging_release
+              break
+            end
           end
+        rescue => error
+          puts "  - Skipping candidate staging release because an error was encountered"
+          puts "\n#{error.class} (#{error.message}):\n  " + error.backtrace.join("\n  ") + "\n"
         end
       end
 

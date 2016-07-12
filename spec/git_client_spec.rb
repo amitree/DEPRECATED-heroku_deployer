@@ -8,5 +8,12 @@ describe Amitree::GitClient do
       expect(@git).to receive(:commit_messages_between).with('aaa111', 'bbb222').and_return(dummy_commit_messages)
       expect(@git.stories_worked_on_between('aaa111', 'bbb222')).to match_array [12345, 45678, 123]
     end
+
+    it 'should ignore things that look like story numbers after the first line' do
+      @git = Amitree::GitClient.new('foo/bar', 'username', 'password')
+      dummy_commit_messages = ["[#12345] foo\nsomething about #456"]
+      expect(@git).to receive(:commit_messages_between).with('aaa111', 'bbb222').and_return(dummy_commit_messages)
+      expect(@git.stories_worked_on_between('aaa111', 'bbb222')).to match_array [12345]
+    end
   end
 end

@@ -9,11 +9,11 @@ describe Amitree::GitClient do
       expect(@git.stories_worked_on_between('aaa111', 'bbb222')).to match_array [12345, 45678, 123]
     end
 
-    it 'should ignore things that look like story numbers after the first line' do
+    it 'should ignore story numbers not in brackets' do
       @git = Amitree::GitClient.new('foo/bar', 'username', 'password')
-      dummy_commit_messages = ["[#12345] foo\nsomething about #456"]
+      dummy_commit_messages = ["[#12345] foo #456\nsomething about [finishes #789]"]
       expect(@git).to receive(:commit_messages_between).with('aaa111', 'bbb222').and_return(dummy_commit_messages)
-      expect(@git.stories_worked_on_between('aaa111', 'bbb222')).to match_array [12345]
+      expect(@git.stories_worked_on_between('aaa111', 'bbb222')).to match_array [12345, 789]
     end
   end
 end

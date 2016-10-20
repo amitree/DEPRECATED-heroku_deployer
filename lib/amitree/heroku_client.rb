@@ -73,7 +73,7 @@ module Amitree
 
     def db_migrate_on_production(options={}, attempts=0)
       begin
-        tasks = %w(db:migrate db:seed) + Array(options[:rake])
+        tasks = Array(options[:rake_prepend]) + %w(db:migrate db:seed) + Array(options[:rake])
         heroku_run @production_app_name, "rake #{tasks.join(' ')}"
       rescue => e
         if attempts < 2

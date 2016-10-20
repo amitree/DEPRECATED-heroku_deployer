@@ -75,6 +75,18 @@ describe Amitree::HerokuClient do
           expect(@cmd).to eq 'rake db:migrate db:seed do:something else'
         end
       end
+      context 'with a single prepended rake task' do
+        let(:options) { {rake_prepend: 'do:something:first'} }
+        it 'should run a single additional rake task if requested' do
+          expect(@cmd).to eq 'rake do:something:first db:migrate db:seed'
+        end
+      end
+      context 'with several prepended rake tasks' do
+        let(:options) { {rake_prepend: ['do:something', 'first']} }
+        it 'should run additional rake tasks if requested' do
+          expect(@cmd).to eq 'rake do:something first db:migrate db:seed'
+        end
+      end
     end
 
     [1,2].each do |n|

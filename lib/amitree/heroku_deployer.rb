@@ -72,6 +72,8 @@ module Amitree
               story.blocked_by = unaccepted_story_ids
             end
             puts "    - Some stories are not yet accepted: #{unaccepted_story_ids.inspect}" if options[:verbose]
+          elsif story_ids.length == 0 && !options[:allow_empty]
+            puts "    - Refusing to deploy empty release" if options[:verbose]
           else
             story_ids_referenced_later = story_ids & @git.stories_worked_on_between(staging_commit, 'HEAD')
             if story_ids_referenced_later.length > 0

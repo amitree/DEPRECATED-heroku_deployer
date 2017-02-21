@@ -14,7 +14,7 @@ describe Amitree::HerokuDeployer do
   let(:heroku) { double(last_promoted_production_release: production_release, :promoted_from_staging? => true, staging_release_version: nil, staging_releases_since: staging_releases) }
   let(:git) { double() }
   let(:tracker_project) { double() }
-  let(:deployer) { Amitree::HerokuDeployer.new(heroku: heroku, git: git) }
+  let(:deployer) { Amitree::HerokuDeployer.new(heroku: heroku, git: git, **options) }
 
   before do
     allow(PivotalTracker::Project).to receive(:all).and_return([tracker_project])
@@ -22,7 +22,7 @@ describe Amitree::HerokuDeployer do
       allow(git).to receive(:stories_worked_on_between).with(production_release['commit'], staging_release['commit']).and_return staging_releases[0..index].map{|release| release['story_id']}.uniq
     end
     releases.each_with_index do |release, index|
-      allow(git).to receive(:stories_worked_on_between).with(release['commit'], 'HEAD').and_return releases[index+1..-1].map{|release| release['story_id']}.uniq
+      allow(git).to receive(:stories_worked_on_between).with(release['commit'], 'HEAD').and_return releases[index+1..-1].map{|release| release['story_id']}.compact.uniq
     end
     stories.each do |story|
       allow(deployer).to receive(:tracker_data).with(story.id).and_return(story)
@@ -32,6 +32,11 @@ describe Amitree::HerokuDeployer do
   end
 
   describe '#compute_release' do
+    let(:options) { {} }
+    let(:production_release) { releases[0] }
+    let(:staging_releases) { releases[1..-1] }
+    let(:result) { deployer.compute_release options }
+
     context 'incomplete stories' do
       let!(:stories) {[
         mock_story(5678, 'accepted'),
@@ -47,10 +52,6 @@ describe Amitree::HerokuDeployer do
         mock_release('[#1234] release 3', 1234)
       ]}
 
-      let(:production_release) { releases[0] }
-      let(:staging_releases) { releases[1..-1] }
-
-      let(:result) { deployer.compute_release }
       it "should not be released" do
         expect(result.staging_release_to_deploy).to eq staging_releases[0]
       end
@@ -58,6 +59,27 @@ describe Amitree::HerokuDeployer do
       it "should set blocked_by correctly" do
         expect(result.stories[0].blocked_by).to eq []
         expect(result.stories[1].blocked_by).to eq [4567]
+      end
+    end
+
+    context 'empty release' do
+      let!(:stories) { [] }
+      let!(:releases) {[
+        mock_release('Current production release'),
+        mock_release('release 0')
+      ]}
+
+      context 'allow_empty is false (default)' do
+        it 'should not be released' do
+          expect(result.staging_release_to_deploy).to be_nil
+        end
+      end
+
+      context 'allow_empty is true' do
+        let(:options) { {allow_empty: true} }
+        it 'should be released' do
+          expect(result.staging_release_to_deploy).to eq staging_releases[0]
+        end
       end
     end
 
@@ -71,11 +93,6 @@ describe Amitree::HerokuDeployer do
         mock_release('[#1234] release 0', 1234),
         mock_release('[#5678] release 1', 5678),
       ]}
-
-      let(:production_release) { releases[0] }
-      let(:staging_releases) { releases[1..-1] }
-
-      let(:result) { deployer.compute_release }
 
       before do
         allow(deployer).to receive(:tracker_data).with(1234).and_return(nil)

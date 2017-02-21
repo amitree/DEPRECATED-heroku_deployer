@@ -2,9 +2,19 @@ require 'octokit'
 
 module Amitree
   class GitClient
-    def initialize(repository, username, password)
+    def self.verbose_middleware
+      Octokit::Default::MIDDLEWARE.dup.tap do |middleware|
+        middleware.response :logger, nil, bodies: true
+      end
+    end
+
+    def initialize(repository, username, password, options={})
       @repository = repository
-      @client = Octokit::Client.new login: username, password: password, connection_options: Octokit::Default.options[:connection_options].merge(request: {timeout: 60, open_timeout: 60})
+      @client = Octokit::Client.new \
+        login: username,
+        password: password,
+        middleware: (self.class.verbose_middleware if options[:verbose]),
+        connection_options: Octokit::Default.options[:connection_options].merge(request: {timeout: 60, open_timeout: 60})
     end
 
     def commits_between(rev1, rev2)

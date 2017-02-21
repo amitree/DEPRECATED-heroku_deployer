@@ -35,7 +35,7 @@ module Amitree
 
     def initialize(options={})
       @heroku = options[:heroku] || Amitree::HerokuClient.new(options[:heroku_api_key], options[:heroku_staging_app], options[:heroku_production_app])
-      @git = options[:git] || Amitree::GitClient.new(options[:github_repo], options[:github_username], options[:github_password])
+      @git = options[:git] || Amitree::GitClient.new(options[:github_repo], options[:github_username], options[:github_password], verbose: options[:verbose])
       PivotalTracker::Client.token = options[:tracker_token]
       PivotalTracker::Client.use_ssl = true
       @tracker_projects = PivotalTracker::Project.all

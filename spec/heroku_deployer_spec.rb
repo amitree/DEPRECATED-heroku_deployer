@@ -18,12 +18,9 @@ describe Amitree::HerokuDeployer do
 
   before do
     allow(PivotalTracker::Project).to receive(:all).and_return([tracker_project])
-    staging_releases.each_with_index do |staging_release, index|
-      allow(git).to receive(:stories_worked_on_between).with(production_release['commit'], staging_release['commit']).and_return staging_releases[0..index].map{|release| release['story_id']}.uniq
-    end
-    releases.each_with_index do |release, index|
-      allow(git).to receive(:stories_worked_on_between).with(release['commit'], 'HEAD').and_return releases[index+1..-1].map{|release| release['story_id']}.compact.uniq
-    end
+    allow(git).to receive(:range_since).with(production_release['commit']).and_return Amitree::GitClient::Range.new(releases.map{|release| OpenStruct.new(sha: release['commit'], commit: OpenStruct.new(message: release['name']))})
+    allow(heroku).to receive(:version) {|release| release['commit']}
+
     stories.each do |story|
       allow(deployer).to receive(:tracker_data).with(story.id).and_return(story)
     end
@@ -45,11 +42,11 @@ describe Amitree::HerokuDeployer do
       ]}
 
       let!(:releases) {[
-        mock_release('Current production release'),
-        mock_release('[#5678] release 0', 5678),
-        mock_release('[#1234] release 1', 1234),
-        mock_release('[#4567] release 2', 4567),
-        mock_release('[#1234] release 3', 1234)
+        mock_release('abcdef1', 'Current production release'),
+        mock_release('abcdef2', '[#5678] release 0'),
+        mock_release('abcdef3', '[#1234] release 1'),
+        mock_release('abcdef4', '[#4567] release 2'),
+        mock_release('abcdef5', '[#1234] release 3')
       ]}
 
       it "should not be released" do
@@ -65,8 +62,8 @@ describe Amitree::HerokuDeployer do
     context 'empty release' do
       let!(:stories) { [] }
       let!(:releases) {[
-        mock_release('Current production release'),
-        mock_release('release 0')
+        mock_release('abcdef1', 'Current production release'),
+        mock_release('abcdef2', 'release 0')
       ]}
 
       context 'allow_empty is false (default)' do
@@ -89,9 +86,9 @@ describe Amitree::HerokuDeployer do
       ]}
 
       let!(:releases) {[
-        mock_release('Current production release'),
-        mock_release('[#1234] release 0', 1234),
-        mock_release('[#5678] release 1', 5678),
+        mock_release('abcdef1', 'Current production release'),
+        mock_release('abcdef2', '[#1234] release 0'),
+        mock_release('abcdef3', '[#5678] release 1'),
       ]}
 
       before do
@@ -109,8 +106,8 @@ describe Amitree::HerokuDeployer do
   end
 end
 
-def mock_release(git_commit_msg, story_id=nil)
-  { 'commit' => git_commit_msg, 'name' => git_commit_msg, 'story_id' => story_id }
+def mock_release(sha, message)
+  { 'commit' => sha, 'name' => message }
 end
 
 def mock_story(id, current_state)

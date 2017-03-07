@@ -51,7 +51,8 @@ module Amitree
       prod_commit = @heroku.get_production_commit(result.production_release)
       puts "Production release is #{prod_commit}" if options[:verbose]
 
-      result.stories = stories_worked_on_between(prod_commit, 'HEAD')
+      git_range = @git.range_since(prod_commit)
+      result.stories = all_stories(git_range)
       all_stories = Hash[result.stories.map{|story| [story.id, story]}]
 
       staging_releases.reverse.each do |staging_release|
@@ -60,7 +61,7 @@ module Amitree
 
           puts "- Trying staging release #{@heroku.version(staging_release)} with commit #{staging_commit}" if options[:verbose]
 
-          stories = all_stories.values_at(*@git.stories_worked_on_between(prod_commit, staging_commit)).compact
+          stories = all_stories.values_at(*git_range.up_to(staging_commit).story_ids).compact
           story_ids = stories.map(&:id)
 
           puts "  - Stories: #{story_ids.inspect}" if options[:verbose]
@@ -75,7 +76,7 @@ module Amitree
           elsif story_ids.length == 0 && !options[:allow_empty]
             puts "    - Refusing to deploy empty release" if options[:verbose]
           else
-            story_ids_referenced_later = story_ids & @git.stories_worked_on_between(staging_commit, 'HEAD')
+            story_ids_referenced_later = story_ids & git_range.since(staging_commit).story_ids
             if story_ids_referenced_later.length > 0
               puts "    - Some stories have been worked on in a later commit: #{story_ids_referenced_later}" if options[:verbose]
             else
@@ -106,8 +107,8 @@ module Amitree
       end
     end
 
-    def stories_worked_on_between(rev1, rev2)
-      @git.stories_worked_on_between(rev1, rev2).map do |story_id|
+    def all_stories(git_range)
+      git_range.story_ids.map do |story_id|
         if story = tracker_data(story_id)
           ReleaseDetails::Story.new(story)
         end

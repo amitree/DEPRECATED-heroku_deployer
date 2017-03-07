@@ -13,6 +13,7 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = '~> 2.0'
   s.add_development_dependency 'rspec', '>= 2.14.1'
+  s.add_development_dependency 'webmock', '>= 2.3.2'
   s.add_runtime_dependency 'octokit', '>= 2.7.1'
   s.add_runtime_dependency 'platform-api', '>= 0.2.0'
   s.add_runtime_dependency 'rendezvous', '>= 0.0.2'

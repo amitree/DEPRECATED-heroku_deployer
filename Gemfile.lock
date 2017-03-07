@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    heroku_deployer (0.7.19)
+    heroku_deployer (0.7.20)
       octokit (>= 2.7.1)
       platform-api (>= 0.2.0)
       rendezvous (>= 0.0.2)
@@ -21,7 +21,8 @@ GEM
     excon (0.55.0)
     faraday (0.11.0)
       multipart-post (>= 1.2, < 3)
-    heroics (0.0.19)
+    hashdiff (0.3.2)
+    heroics (0.0.21)
       erubis (~> 2.0)
       excon
       multi_json (>= 1.9.2)
@@ -29,6 +30,7 @@ GEM
       domain_name (~> 0.5)
     mime-types (2.99.2)
     mini_portile2 (2.1.0)
+    moneta (0.8.1)
     multi_json (1.12.1)
     multipart-post (2.0.0)
     netrc (0.10.3)
@@ -44,8 +46,9 @@ GEM
       nokogiri (>= 1.5.5)
       nokogiri-happymapper (>= 0.5.4)
       rest-client (>= 1.8.0)
-    platform-api (0.8.0)
-      heroics (~> 0.0.17)
+    platform-api (1.0.0)
+      heroics (~> 0.0.20)
+      moneta (~> 0.8.1)
     public_suffix (2.0.5)
     rendezvous (0.1.2)
     rest-client (1.8.0)
@@ -72,6 +75,10 @@ GEM
     unf (0.1.4)
       unf_ext
     unf_ext (0.0.7.2)
+    webmock (2.3.2)
+      addressable (>= 2.3.6)
+      crack (>= 0.3.2)
+      hashdiff
 
 PLATFORMS
   ruby
@@ -80,6 +87,7 @@ DEPENDENCIES
   heroku_deployer!
   pivotal-tracker (>= 0.5.13)
   rspec (>= 2.14.1)
+  webmock (>= 2.3.2)
 
 BUNDLED WITH
    1.13.6

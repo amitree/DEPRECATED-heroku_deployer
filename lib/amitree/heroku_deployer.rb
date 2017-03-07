@@ -6,7 +6,7 @@ require 'pivotal-tracker'
 module Amitree
   class HerokuDeployer
     class ReleaseDetails
-      attr_accessor :production_release, :staging_release_to_deploy, :stories
+      attr_accessor :production_release, :staging_release_to_deploy, :stories, :git_range
 
       def initialize
         @stories = []
@@ -61,7 +61,8 @@ module Amitree
 
           puts "- Trying staging release #{@heroku.version(staging_release)} with commit #{staging_commit}" if options[:verbose]
 
-          stories = all_stories.values_at(*git_range.up_to(staging_commit).story_ids).compact
+          candidate_git_range = git_range.up_to(staging_commit)
+          stories = all_stories.values_at(*candidate_git_range.story_ids).compact
           story_ids = stories.map(&:id)
 
           puts "  - Stories: #{story_ids.inspect}" if options[:verbose]
@@ -85,6 +86,7 @@ module Amitree
               end
               puts "    - This release is good to go!" if options[:verbose]
               result.staging_release_to_deploy = staging_release
+              result.git_range = candidate_git_range
               break
             end
           end

@@ -18,7 +18,7 @@ describe Amitree::HerokuDeployer do
 
   before do
     allow(PivotalTracker::Project).to receive(:all).and_return([tracker_project])
-    allow(git).to receive(:range_since).with(production_release['commit']).and_return Amitree::GitClient::Range.new(releases.map{|release| OpenStruct.new(sha: release['commit'], commit: OpenStruct.new(message: release['name']))})
+    allow(git).to receive(:range_since).with(production_release['commit']).and_return Amitree::GitClient::Range.new(staging_releases.map{|release| OpenStruct.new(sha: release['commit'], commit: OpenStruct.new(message: release['name']))})
     allow(heroku).to receive(:version) {|release| release['commit']}
 
     stories.each do |story|
@@ -51,6 +51,7 @@ describe Amitree::HerokuDeployer do
 
       it "should not be released" do
         expect(result.staging_release_to_deploy).to eq staging_releases[0]
+          expect(result.git_range.commit_messages).to eq ['[#5678] release 0']
       end
 
       it "should set blocked_by correctly" do
@@ -69,6 +70,7 @@ describe Amitree::HerokuDeployer do
       context 'allow_empty is false (default)' do
         it 'should not be released' do
           expect(result.staging_release_to_deploy).to be_nil
+          expect(result.git_range).to be_nil
         end
       end
 
@@ -76,6 +78,7 @@ describe Amitree::HerokuDeployer do
         let(:options) { {allow_empty: true} }
         it 'should be released' do
           expect(result.staging_release_to_deploy).to eq staging_releases[0]
+          expect(result.git_range.commit_messages).to eq ['release 0']
         end
       end
     end

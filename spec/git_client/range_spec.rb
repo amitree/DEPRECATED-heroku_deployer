@@ -25,6 +25,12 @@ describe Amitree::GitClient::Range do
     it { is_expected.to match_array ['message 1', 'message 2', 'message 1'] }
   end
 
+  describe '#commits' do
+    subject { git_range.commits }
+    let(:messages) { ['message 1', 'message 2', 'message 1'] }
+    it { is_expected.to eq commits }
+  end
+
   describe '#since' do
     let(:shas) { ['2345678', '1234567', '2222222', '1111111', '0123456'] }
     let(:commits) { shas.map { |sha| OpenStruct.new(sha: sha, commit: OpenStruct.new(message: "Commit #{sha}")) } }
